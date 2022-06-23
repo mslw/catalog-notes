@@ -179,3 +179,9 @@ This currently needs to be done with the fairly-big-catalog scripts, using =step
 : [1;1mcatalog add[0m([1;32mok[0m): /home/mszczepanik/Documents/test-catalog [Metadata items successfully added to catalog]
 
 
+* Side notes
+There are errors if datasets have no names.
+Manual way to edit is:
+#+begin_src
+sed -i.bak 's/"name":""/"name":"DS Name"/' translated_meta.json
+#+end_src
