@@ -1,0 +1,21 @@
+{
+    "provider": {
+	"module": "datalad_metalad.pipeline.provider.datasettraverse",
+	"class": "DatasetTraverser",
+	"name": "traverser",
+	"arguments": {
+	    "item_type": "file"
+	}
+    },
+    "processors": [
+	{
+            "module": "datalad_metalad.pipeline.processor.extract",
+            "class": "MetadataExtractor",
+            "name": "extractor",
+            "arguments": {
+		"extractor_type": "file",
+		"extractor_name": "metalad_core"
+	    }
+	}
+    ]
+}

@@ -1,0 +1,181 @@
+#+title: A little test
+
+* Preliminary
+
+We need to activate a virtualenvironment with datalad-catalog and metalad:
+
+#+begin_src elisp :results none :session catalog
+  (pyvenv-workon "catalog")
+#+end_src
+
+Check that we have the correct environment & we're in the right working directory:
+
+#+begin_src sh :results output :session catalog
+datalad --version
+pwd
+#+end_src
+
+#+RESULTS:
+: 
+: datalad 0.16.6
+: /home/mszczepanik/Documents/test-catalog
+
+* The setting
+
+- The dataset is in =datasets/rdm_workshop=
+- The pipeline specifications for meta-conduct are in =conduct_pipelines=
+
+* Extract dataset metadata
+
+Dataset metadata contains information such as dataset id and version, as well as information on dataset's origin.
+
+We'll use =datalad meta-extract= command and =metalad_core= extractor:
+
+#+begin_src sh :results output :session catalog
+  datalad meta-extract -d datasets/rdm-workshop metalad_core > output.json
+#+end_src
+
+#+RESULTS:
+: [INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+: [INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop 
+: [INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop)
+
+* Extract study-metadata
+
+The study information (such as authors, publications, funding) might be contained in a standard citation file,
+like =datacite.yml=, or =studyminimeta.yaml=. These can also be extracted.
+
+The example dataset has none, but if it had we could run one of the following:
+
+For studyminimeta (metalad-specific, see for example [[https://github.com/jsheunis/Simulating-SNN-cost-with-GeNN-NEST][this dataset]]), use =metalad_studyminimeta= extractor:
+
+#+begin_src
+  datalad meta-extract -d datasets/rdm-workshop metalad_studyminimeta >> output.json
+#+end_src
+
+... and for =datacite= there is also a built-in =datacite_gin= extractor:
+
+#+begin_src
+  datalad meta-extract -d datasets/rdm-workshop datacite_gin >> output.json
+#+end_src
+
+* Extract file level metadata
+
+File-level metadata is, essentially, relative file paths and sizes.
+These can also be extracted using =metalad_core= extractor.
+However, to do it for each file, we will use =meta-conduct= rather than =meta-extract= command.
+
+The basic syntax is =datalad meta-conduct CONFIGURATION [ARGUMENTS]=.
+Examples can be found in the [[https://github.com/jsheunis/fairly-big-catalog-workflow][FAIRly big catalog workflow]].
+Required configuration is in the =conduct_pipelines/extract_file_metadata.json= file:
+and the call to =meta-conduct= is  example use is in =local/local_extract_filelevel.sh=.
+
+We can move some of the parameters from the call to the specification, =conduct_pipelines/extract_files.json=:
+
+#+begin_src json
+{
+    "provider": {
+	"module": "datalad_metalad.pipeline.provider.datasettraverse",
+	"class": "DatasetTraverser",
+	"name": "traverser",
+	"arguments": {
+	    "item_type": "file"
+	}
+    },
+    "processors": [
+	{
+            "module": "datalad_metalad.pipeline.processor.extract",
+            "class": "MetadataExtractor",
+            "name": "extractor",
+            "arguments": {
+		"extractor_type": "file",
+		"extractor_name": "metalad_core"
+	    }
+	}
+    ]
+}
+#+end_src
+
+And the =meta-conduct= call looks as follows:
+
+#+begin_src sh :results value verbatim :session catalog
+  datalad -f json meta-conduct conduct_pipelines/extract_files.json \
+    traverser.top_level_dir=datasets/rdm-workshop \
+    | jq -c '.["pipeline_data"]["result"]["metadata"][0]["metadata_record"]' >> output.json
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+> [INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/README.md 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/inputs/images/chinstrap_01.yaml 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/inputs/images/chinstrap_02.jpg 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/inputs/images/chinstrap_01.jpg 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/code/greyscale.py 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/outputs/images_greyscale/chinstrap_01_grey.jpg 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Start core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/outputs/images_greyscale/chinstrap_02_grey.jpg 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop) 
+[INFO] Extracted core metadata from /home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop/inputs/images/chinstrap_02.yaml 
+[INFO] Finished core metadata extraction from Dataset(/home/mszczepanik/Documents/test-catalog/datasets/rdm-workshop)
+#+end_example
+
+* Extract domain-specific metadata
+
+There can be additional extractors, for example BIDS.
+This is currently part of PR to datalad-neuroimaging.
+If one has it installed, one can run:
+
+#+begin_src sh :results value verbatim :session catalog
+  datalad meta-extract -d datasets/rdm-workshop bids_dataset >> bids.json
+#+end_src
+
+#+RESULTS:
+: [ERROR] ExtractorNotFoundError(Requested metadata extractor 'bids_dataset' not available) (ExtractorNotFoundError) 
+: usage: datalad meta-extract [-h] [-d DATASET] [-c CONTEXT] [--get-context] [--version]
+:                             EXTRACTOR_NAME [FILE] [EXTRACTOR_ARGUMENTS ...]
+
+* Translate metadata
+
+This currently needs to be done with the fairly-big-catalog scripts, using =stephan_dev= branch.
+
+#+begin_src sh :results value verbatim :session catalog
+  fairly-big-catalog-workflow/local/local_translate_metadata.sh output.json translated_output.json
+#+end_src
+
+#+RESULTS:
+: Translating line 1:
+: Translating line 2:
+: Translating line 3:
+: Translating line 4:
+: Translating line 5:
+: Translating line 6:
+: Translating line 7:
+: Translating line 8:
+: Translating line 9:
+
+* Add to the catalog
+
+(Catalog creation not described here, follow [[https://github.com/datalad/tutorials/tree/master/notebooks/catalog_tutorials][DataLad Catalog tutorial 1]])
+
+#+begin_src sh :session catalog
+  datalad catalog add -c test_catalog -m translated_output.json
+#+end_src
+
+#+RESULTS:
+: [1;1mcatalog add[0m([1;32mok[0m): /home/mszczepanik/Documents/test-catalog [Metadata items successfully added to catalog]
+
+
