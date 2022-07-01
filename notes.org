@@ -182,7 +182,7 @@ This currently needs to be done with the fairly-big-catalog scripts, using =step
 * Side notes
 DataLad itself has no concept of dataset name, and the core extractor doesn't report one for the top-level dataset
 (it will repost a path to a subdataset as a "name" of that subdataset, though).
-The name (title) of the dataset would usually come from =metalad_studyminimeta= or =datacite_gin= extractor.
+The name (title) of the dataset would usually come from =metalad_studyminimeta=, =datacite_gin=, or ==bids_dataset= extractor.
 
 There are errors if datasets have no names.
 Manual way to edit is:
