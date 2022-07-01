@@ -42,7 +42,7 @@ We'll use =datalad meta-extract= command and =metalad_core= extractor:
 
 * Extract study-metadata
 
-The study information (such as authors, publications, funding) might be contained in a standard citation file,
+The study information (such as dataset name, keywords, authors, publications, funding) might be contained in a standard citation file,
 like =datacite.yml=, or =studyminimeta.yaml=. These can also be extracted.
 
 The example dataset has none, but if it had we could run one of the following:
@@ -180,6 +180,10 @@ This currently needs to be done with the fairly-big-catalog scripts, using =step
 
 
 * Side notes
+DataLad itself has no concept of dataset name, and the core extractor doesn't report one for the top-level dataset
+(it will repost a path to a subdataset as a "name" of that subdataset, though).
+The name (title) of the dataset would usually come from =metalad_studyminimeta= or =datacite_gin= extractor.
+
 There are errors if datasets have no names.
 Manual way to edit is:
 #+begin_src
